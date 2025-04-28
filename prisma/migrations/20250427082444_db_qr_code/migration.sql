@@ -1,10 +1,6 @@
--- CreateEnum
-CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN');
-
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
-    "role" "Role" NOT NULL DEFAULT 'USER',
     "name" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "emailVerified" BOOLEAN NOT NULL DEFAULT false,

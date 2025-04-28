@@ -15,7 +15,6 @@ datasource db {
 
 model User {
   id            Int      @id @default(autoincrement())
-  role          Role     @default(USER)
   name          String
   email         String   @unique
   emailVerified Boolean  @default(false)
@@ -23,10 +22,5 @@ model User {
   password      String
   createAt      DateTime @default(now())
   updateAt      DateTime @updatedAt
-  metaData      Json?
-}
-
-enum Role {
-  USER
-  ADMIN
+  metaData      Json
 }
