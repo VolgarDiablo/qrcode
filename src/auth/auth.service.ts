@@ -4,14 +4,17 @@ import { PrismaService } from 'src/prisma.service';
 import { SignupRequest } from './intertace';
 
 @Injectable()
-export class UsersService {
+export class AuthService {
   constructor(private prisma: PrismaService) {}
   async signup(payload: SignupRequest) {
     const hash = await this.encryptPassword(payload.password, 10);
 
     payload.password = hash;
     return await this.prisma.user.create({
-      data: { ...payload, metaData: { ip: '127.0.0.1' } },
+      data: {
+        ...payload,
+        metaData: { ip: '127.0.0.1' },
+      },
     });
   }
 
