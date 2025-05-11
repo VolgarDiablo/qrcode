@@ -1,5 +1,5 @@
 import { IsEmail, IsString, IsNotEmpty } from 'class-validator';
-import { LoginRequest } from './interface';
+import { LoginRequest } from '../interface/sighin-interface';
 
 export class LoginDTO implements LoginRequest {
   @IsEmail()

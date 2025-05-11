@@ -6,7 +6,7 @@ import {
   Length,
   IsStrongPassword,
 } from 'class-validator';
-import { SignupRequest } from './intertace';
+import { SignupRequest } from '../interface/sighup-intertace';
 
 export class CreateUserDTO implements SignupRequest {
   @IsNotEmpty()

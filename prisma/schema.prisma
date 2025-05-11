@@ -22,5 +22,5 @@ model User {
   password      String
   createAt      DateTime @default(now())
   updateAt      DateTime @updatedAt
-  metaData      Json
+  metaData      Json?
 }
