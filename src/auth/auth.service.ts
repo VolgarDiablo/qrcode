@@ -2,24 +2,19 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma.service';
 import { SignupRequest } from './interface/sighup-intertace';
-import { JwtService } from '@nestjs/jwt';
 import { LoginRequest } from './interface/sighin-interface';
+import * as jwt from 'jsonwebtoken';
+import { jwtConstants } from './constans';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private prisma: PrismaService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
   async signup(payload: SignupRequest) {
     const hash = await this.encryptPassword(payload.password, 10);
 
     payload.password = hash;
     return await this.prisma.user.create({
-      data: {
-        ...payload,
-        metaData: {},
-      },
+      data: payload,
     });
   }
 
@@ -44,10 +39,11 @@ export class AuthService {
     if (!isMathed) {
       throw new UnauthorizedException('Invalid password');
     }
-    const idToken = await this.jwtService.signAsync(
+    const idToken = jwt.sign(
       {
         id: user.id,
       },
+      jwtConstants.secret,
       { expiresIn: '30d' },
     );
     await this.prisma.user.update({

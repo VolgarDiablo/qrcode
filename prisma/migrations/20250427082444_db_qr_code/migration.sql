@@ -8,7 +8,7 @@ CREATE TABLE "User" (
     "password" TEXT NOT NULL,
     "createAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updateAt" TIMESTAMP(3) NOT NULL,
-    "metaData" JSONB NOT NULL,
+    "metaData" JSONB,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
