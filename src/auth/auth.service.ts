@@ -4,7 +4,7 @@ import { PrismaService } from 'src/prisma.service';
 import { SignupRequest } from './interface/sighup-intertace';
 import { LoginRequest } from './interface/sighin-interface';
 import * as jwt from 'jsonwebtoken';
-import { jwtConstants } from './constans';
+import { jwtConstants } from './constants';
 
 @Injectable()
 export class AuthService {
@@ -58,5 +58,18 @@ export class AuthService {
 
   async dencryptPassword(plainText, hash) {
     return await bcrypt.compare(plainText, hash);
+  }
+
+  async findById(id: number) {
+    return this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        createdAt: true,
+      },
+    });
   }
 }

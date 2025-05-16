@@ -20,7 +20,7 @@ model User {
   emailVerified Boolean  @default(false)
   phone         String
   password      String
-  createAt      DateTime @default(now())
-  updateAt      DateTime @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   metaData      Json?
 }

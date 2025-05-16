@@ -17,7 +17,7 @@ export class CreateUserDTO implements SignupRequest {
   @IsEmail()
   email: string;
 
-  @IsPhoneNumber()
+  @IsPhoneNumber(undefined)
   phone: string;
 
   @IsNotEmpty()
