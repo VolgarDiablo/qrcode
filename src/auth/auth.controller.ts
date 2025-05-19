@@ -7,9 +7,9 @@ import {
   Req,
   UnauthorizedException,
 } from '@nestjs/common';
-import { CreateUserDTO } from './dto/create-user-dto';
+import { CreateUserDTO } from './DTO/create-user-dto';
 import { AuthService } from './auth.service';
-import { LoginDTO } from 'src/auth/dto/login-dto';
+import { LoginDTO } from './DTO/login-dto';
 import { Request } from 'express';
 import { AuthGuard } from './auth.guard';
 
@@ -24,6 +24,9 @@ export class AuthController {
     return await this.authService.signup(createUserDTO);
   }
 
+  @Post('verify')
+  async verify(email, type, url) {}
+
   @Post('/signin')
   async login(
     @Body()
@@ -35,7 +38,7 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @Get()
   getAuthenticatedUser(@Req() req: Request) {
-    const userId = req['user']?.id;
+    const userId = req['user'].id;
     if (!userId) throw new UnauthorizedException();
 
     return this.authService.findById(Number(userId));

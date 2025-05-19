@@ -13,7 +13,7 @@ export class AuthService {
     const hash = await this.encryptPassword(payload.password, 10);
 
     payload.password = hash;
-    return await this.prisma.user.create({
+    await this.prisma.user.create({
       data: payload,
     });
   }
@@ -68,7 +68,6 @@ export class AuthService {
         email: true,
         name: true,
         phone: true,
-        createdAt: true,
       },
     });
   }
