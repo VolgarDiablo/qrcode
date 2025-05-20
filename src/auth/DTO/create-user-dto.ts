@@ -7,6 +7,7 @@ import {
   IsStrongPassword,
 } from 'class-validator';
 import { SignupRequest } from '../interface/sighup-intertace';
+import { IsPhoneForCurrentCountry } from 'src/config/IsPhoneForCurrentCountry';
 
 export class CreateUserDTO implements SignupRequest {
   @IsNotEmpty()
@@ -17,7 +18,7 @@ export class CreateUserDTO implements SignupRequest {
   @IsEmail()
   email: string;
 
-  @IsPhoneNumber(undefined)
+  @IsPhoneForCurrentCountry()
   phone: string;
 
   @IsNotEmpty()
