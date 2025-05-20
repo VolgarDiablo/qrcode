@@ -6,10 +6,11 @@ import {
   UseGuards,
   Req,
   UnauthorizedException,
+  HttpCode,
 } from '@nestjs/common';
-import { CreateUserDTO } from './DTO/create-user-dto';
+import { CreateUserDTO } from './dto/create-user-dto';
 import { AuthService } from './auth.service';
-import { LoginDTO } from './DTO/login-dto';
+import { LoginDTO } from './dto/login-dto';
 import { Request } from 'express';
 import { AuthGuard } from './auth.guard';
 
@@ -17,14 +18,12 @@ import { AuthGuard } from './auth.guard';
 export class AuthController {
   constructor(private authService: AuthService) {}
   @Post('/signup')
-  async create(
-    @Body()
-    createUserDTO: CreateUserDTO,
-  ) {
-    return await this.authService.signup(createUserDTO);
+  @HttpCode(201)
+  async create(@Body() createUserDTO: CreateUserDTO): Promise<void> {
+    await this.authService.signup(createUserDTO);
   }
 
-  @Post('verify')
+  @Post('/verify')
   async verify(email, type, url) {}
 
   @Post('/signin')
