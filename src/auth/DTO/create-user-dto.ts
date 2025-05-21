@@ -6,10 +6,10 @@ import {
   Length,
   IsStrongPassword,
 } from 'class-validator';
-import { SignupRequest } from '../interface/sighup-intertace';
+import { ISignupRequest } from '../interface/sighup.intertace';
 import { IsPhoneForCurrentCountry } from 'src/config/IsPhoneForCurrentCountry';
 
-export class CreateUserDTO implements SignupRequest {
+export class CreateUserDTO implements ISignupRequest {
   @IsNotEmpty()
   @IsString()
   @Length(3, 20)

@@ -1,15 +1,17 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma.service';
-import { SignupRequest } from './interface/sighup-intertace';
-import { LoginRequest } from './interface/sighin-interface';
+import { ISignupRequest } from './interface/sighup.intertace';
+import { ILoginRequest } from './interface/sighin.interface';
 import * as jwt from 'jsonwebtoken';
 import { jwtConstants } from './constants';
+import { ITokenResponse } from './interface/token-response.interface.ts';
+import { IUserResponse } from './interface/user-response.interface';
 
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService) {}
-  async signup(payload: SignupRequest) {
+  async signup(payload: ISignupRequest) {
     const hash = await this.encryptPassword(payload.password, 10);
 
     payload.password = hash;
@@ -22,7 +24,7 @@ export class AuthService {
     return await bcrypt.hash(plainText, saltRounds);
   }
 
-  async login(LoginDTO: LoginRequest): Promise<{ idToken: string }> {
+  async login(LoginDTO: ILoginRequest): Promise<ITokenResponse> {
     const user = await this.prisma.user.findFirst({
       where: {
         email: LoginDTO.email,
@@ -39,15 +41,15 @@ export class AuthService {
     if (!isMathed) {
       throw new UnauthorizedException('Invalid password');
     }
-    const idToken = this.generateToken({ id: user.id });
+    const token = this.generateToken({ id: user.id });
     await this.prisma.user.update({
       where: { id: user.id },
 
       data: {
-        metaData: { idToken },
+        metaData: { token },
       },
     });
-    return { idToken };
+    return { token };
   }
 
   async decryptPassword(plainText, hash) {
@@ -58,7 +60,7 @@ export class AuthService {
     return jwt.sign(payload, jwtConstants.secret, { expiresIn: '30d' });
   }
 
-  async findById(id: number) {
+  async findById(id: number): Promise<IUserResponse | null> {
     return this.prisma.user.findUnique({
       where: { id },
       select: {
