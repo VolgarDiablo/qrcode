@@ -1,4 +1,4 @@
-import { ITokenResponse } from '../interface/token-response.interface.ts';
+import { ITokenResponse } from '../interface/token-response.interface.ts.js';
 
 export class TokenResponseDTO implements ITokenResponse {
   constructor(partial: Partial<TokenResponseDTO>) {

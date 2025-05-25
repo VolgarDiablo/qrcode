@@ -1,13 +1,12 @@
 import {
   IsEmail,
-  IsPhoneNumber,
   IsString,
   IsNotEmpty,
   Length,
   IsStrongPassword,
 } from 'class-validator';
 import { ISignupRequest } from '../interface/sighup.intertace';
-import { IsPhoneForCurrentCountry } from 'src/config/IsPhoneForCurrentCountry';
+import { IsPhoneForCurrentCountry } from 'src/utils/PhoneValidation';
 
 export class CreateUserDTO implements ISignupRequest {
   @IsNotEmpty()

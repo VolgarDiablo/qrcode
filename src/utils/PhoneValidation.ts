@@ -1,5 +1,5 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
-import { getConfigCountry } from './country.config';
+import { getConfigCountry } from '../config/country.config';
 
 export function IsPhoneForCurrentCountry(
   validationOptions?: ValidationOptions,

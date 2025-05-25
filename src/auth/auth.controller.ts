@@ -13,6 +13,8 @@ import { AuthService } from './auth.service';
 import { LoginDTO } from './dto/login-dto';
 import { Request } from 'express';
 import { AuthGuard } from './auth.guard';
+import { TokenResponseDTO } from './dto/token-response-dto';
+import { UserResponseDTO } from './dto/user-response.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -23,23 +25,20 @@ export class AuthController {
     await this.authService.signup(createUserDTO);
   }
 
-  @Post('/verify')
-  async verify(email, type, url) {}
-
   @Post('/signin')
-  async login(
-    @Body()
-    loginDTO: LoginDTO,
-  ) {
-    return await this.authService.login(loginDTO);
+  async login(@Body() loginDTO: LoginDTO): Promise<TokenResponseDTO> {
+    const token = await this.authService.login(loginDTO);
+    return new TokenResponseDTO(token);
   }
 
   @UseGuards(AuthGuard)
   @Get()
-  getAuthenticatedUser(@Req() req: Request) {
+  async getAuthenticatedUser(@Req() req: Request): Promise<UserResponseDTO> {
     const userId = req['user'].id;
-    if (!userId) throw new UnauthorizedException();
+    const user = await this.authService.findById(userId);
 
-    return this.authService.findById(Number(userId));
+    if (!user) throw new UnauthorizedException();
+
+    return new UserResponseDTO(user);
   }
 }
