@@ -7,10 +7,14 @@ import * as jwt from 'jsonwebtoken';
 import { jwtConstants } from './constants';
 import { ITokenResponse } from './interface/token-response.interface.ts';
 import { IUserResponse } from './interface/user-response.interface';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailService: EmailService,
+  ) {}
   async signup(payload: ISignupRequest) {
     const hash = await this.encryptPassword(payload.password, 10);
 
@@ -18,6 +22,10 @@ export class AuthService {
     await this.prisma.user.create({
       data: payload,
     });
+    await this.emailService.sendTestEmail(
+      payload.email,
+      `Привет, ${payload.name}! Спасибо за регистрацию.`,
+    );
   }
 
   async encryptPassword(plainText, saltRounds) {
