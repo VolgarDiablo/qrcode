@@ -7,6 +7,8 @@ import {
   Req,
   UnauthorizedException,
   HttpCode,
+  Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { CreateUserDTO } from './dto/create-user-dto';
 import { AuthService } from './auth.service';
@@ -40,5 +42,14 @@ export class AuthController {
     if (!user) throw new UnauthorizedException();
 
     return new UserResponseDTO(user);
+  }
+
+  @Get('email/verify')
+  async verifyEmail(@Query('token') token: string) {
+    const payload = this.authService.verifyTokenActive(token);
+    if (!payload?.id) throw new BadRequestException('Invalid token');
+
+    const user = await this.authService.confirmEmail(payload.id);
+    return { message: 'Email verified' };
   }
 }

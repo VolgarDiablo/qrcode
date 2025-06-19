@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma.service';
 import { ISignupRequest } from './interface/sighup.intertace';
@@ -19,13 +23,26 @@ export class AuthService {
     const hash = await this.encryptPassword(payload.password, 10);
 
     payload.password = hash;
-    await this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: payload,
     });
-    await this.emailService.sendTestEmail(
-      payload.email,
-      `Привет, ${payload.name}! Спасибо за регистрацию.`,
-    );
+
+    const tokenEmailVerify = this.generateTokenEmailVerify({ id: user.id });
+
+    // await this.prisma.user.update({
+    //   where: { id: user.id },
+
+    //   data: {
+    //     metaData: { tokenEmailVerify },
+    //   },
+    // });
+
+    const URLEmailVerify = `${process.env.APP_BASE_URL}/auth/email/verify?token=${tokenEmailVerify}`;
+    console.log(URLEmailVerify);
+    // await this.emailService.sendTestEmail(
+    //   payload.email,
+    //   `Привет ${user.name}. Для подтверждения почты, перейдите по следующей ссылке: ${URLEmailVerify}. Данная ссылка будет активной в течение 10 минут.`,
+    // );
   }
 
   async encryptPassword(plainText, saltRounds) {
@@ -49,7 +66,7 @@ export class AuthService {
     if (!isMathed) {
       throw new UnauthorizedException('Invalid password');
     }
-    const token = this.generateToken({ id: user.id });
+    const token = this.generateTokenActive({ id: user.id });
     await this.prisma.user.update({
       where: { id: user.id },
 
@@ -64,8 +81,31 @@ export class AuthService {
     return await bcrypt.compare(plainText, hash);
   }
 
-  generateToken(payload: object): string {
+  generateTokenActive(payload: object): string {
     return jwt.sign(payload, jwtConstants.secret, { expiresIn: '30d' });
+  }
+
+  generateTokenEmailVerify(payload: object): string {
+    return jwt.sign(payload, jwtConstants.secret, { expiresIn: '10m' });
+  }
+
+  verifyTokenActive(token: string): { id: number } {
+    try {
+      return jwt.verify(token, jwtConstants.secret) as { id: number };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
+  async confirmEmail(id: number) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+
+    if (!user) throw new NotFoundException();
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { emailVerified: true },
+    });
   }
 
   async findById(id: number): Promise<IUserResponse | null> {
