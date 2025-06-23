@@ -9,6 +9,7 @@ import {
   HttpCode,
   Query,
   BadRequestException,
+  Res,
 } from '@nestjs/common';
 import { CreateUserDTO } from './dto/create-user-dto';
 import { AuthService } from './auth.service';
@@ -17,6 +18,7 @@ import { Request } from 'express';
 import { AuthGuard } from './auth.guard';
 import { TokenResponseDTO } from './dto/token-response-dto';
 import { UserResponseDTO } from './dto/user-response.dto';
+import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -45,11 +47,32 @@ export class AuthController {
   }
 
   @Get('email/verify')
-  async verifyEmail(@Query('token') token: string) {
+  async verifyEmail(
+    @Res() res: Response,
+    @Query('token') token: string,
+    @Query('redirect') redirect?: string,
+  ) {
     const payload = this.authService.verifyTokenActive(token);
     if (!payload?.id) throw new BadRequestException('Invalid token');
 
-    const user = await this.authService.confirmEmail(payload.id);
-    return { message: 'Email verified' };
+    const user = await this.authService.findByIdRaw(payload.id);
+    if (!user) throw new BadRequestException('User not found');
+
+    if (user.emailVerified) {
+      return res.send('✅ Mail has already been confirmed');
+    }
+
+    await this.authService.confirmEmail(payload.id);
+
+    if (redirect) {
+      const jwt = this.authService.generateTokenActive({ id: payload.id });
+
+      const url = new URL(redirect, process.env.FRONTEND_URL);
+      url.searchParams.set('token', jwt);
+
+      return res.redirect(302, url.toString());
+    }
+
+    return res.send('✅ Email verified successfully');
   }
 }

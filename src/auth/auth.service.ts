@@ -3,6 +3,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma.service';
 import { ISignupRequest } from './interface/sighup.intertace';
@@ -23,26 +24,12 @@ export class AuthService {
     const hash = await this.encryptPassword(payload.password, 10);
 
     payload.password = hash;
+
     const user = await this.prisma.user.create({
       data: payload,
     });
 
-    const tokenEmailVerify = this.generateTokenEmailVerify({ id: user.id });
-
-    // await this.prisma.user.update({
-    //   where: { id: user.id },
-
-    //   data: {
-    //     metaData: { tokenEmailVerify },
-    //   },
-    // });
-
-    const URLEmailVerify = `${process.env.APP_BASE_URL}/auth/email/verify?token=${tokenEmailVerify}`;
-    console.log(URLEmailVerify);
-    // await this.emailService.sendTestEmail(
-    //   payload.email,
-    //   `Привет ${user.name}. Для подтверждения почты, перейдите по следующей ссылке: ${URLEmailVerify}. Данная ссылка будет активной в течение 10 минут.`,
-    // );
+    await this.sendVerificationEmail(user);
   }
 
   async encryptPassword(plainText, saltRounds) {
@@ -59,21 +46,32 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException();
     }
+
     const isMathed = await this.decryptPassword(
       LoginDTO.password,
       user.password,
     );
+
     if (!isMathed) {
       throw new UnauthorizedException('Invalid password');
     }
+
+    if (!user.emailVerified) {
+      await this.sendVerificationEmail(user, 'https://www.google.com/');
+      throw new UnauthorizedException(
+        'Email not verified. Verification link sent.',
+      );
+    }
+
     const token = this.generateTokenActive({ id: user.id });
+
     await this.prisma.user.update({
       where: { id: user.id },
-
       data: {
         metaData: { token },
       },
     });
+
     return { token };
   }
 
@@ -97,15 +95,35 @@ export class AuthService {
     }
   }
 
+  private async sendVerificationEmail(user: User, redirectPath?: string) {
+    const tokenEmailVerify = this.generateTokenEmailVerify({ id: user.id });
+
+    const url = new URL('/auth/email/verify', process.env.APP_BASE_URL);
+    url.searchParams.set('token', tokenEmailVerify);
+    if (redirectPath) url.searchParams.set('redirect', redirectPath);
+
+    console.log(url.toString());
+
+    // await this.emailService.sendTestEmail(
+    //   user.email,
+    //   `Привет, ${user.name}. Подтверди почту: ${fullUrl}`,
+    // );
+  }
+
   async confirmEmail(id: number) {
     const user = await this.prisma.user.findUnique({ where: { id } });
 
     if (!user) throw new NotFoundException();
+    if (user.emailVerified == true) return;
 
     return this.prisma.user.update({
       where: { id },
       data: { emailVerified: true },
     });
+  }
+
+  async findByIdRaw(id: number) {
+    return this.prisma.user.findUnique({ where: { id } });
   }
 
   async findById(id: number): Promise<IUserResponse | null> {
