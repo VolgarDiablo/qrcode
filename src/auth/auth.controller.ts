@@ -14,24 +14,32 @@ import {
 import { CreateUserDTO } from './dto/create-user-dto';
 import { AuthService } from './auth.service';
 import { LoginDTO } from './dto/login-dto';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { AuthGuard } from './auth.guard';
 import { TokenResponseDTO } from './dto/token-response-dto';
 import { UserResponseDTO } from './dto/user-response.dto';
-import { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
   @Post('/signup')
   @HttpCode(201)
-  async create(@Body() createUserDTO: CreateUserDTO): Promise<void> {
-    await this.authService.signup(createUserDTO);
+  async create(
+    @Body() createUserDTO: CreateUserDTO,
+    @Req() req: Request,
+  ): Promise<void> {
+    const origin = req.headers.origin ?? 'http://localhost:3000';
+    await this.authService.signup(createUserDTO, origin);
   }
 
   @Post('/signin')
-  async login(@Body() loginDTO: LoginDTO): Promise<TokenResponseDTO> {
-    const token = await this.authService.login(loginDTO);
+  async login(
+    @Body() loginDTO: LoginDTO,
+    @Req() req: Request,
+  ): Promise<TokenResponseDTO> {
+    const origin = req.headers.origin ?? 'http://localhost:3000';
+    const token = await this.authService.login(loginDTO, origin);
+
     return new TokenResponseDTO(token);
   }
 
@@ -47,11 +55,7 @@ export class AuthController {
   }
 
   @Get('email/verify')
-  async verifyEmail(
-    @Res() res: Response,
-    @Query('token') token: string,
-    @Query('redirect') redirect?: string,
-  ) {
+  async verifyEmail(@Res() res: Response, @Query('token') token: string) {
     const payload = this.authService.verifyTokenActive(token);
     if (!payload?.id) throw new BadRequestException('Invalid token');
 
@@ -62,16 +66,7 @@ export class AuthController {
       return res.send('✅ Mail has already been confirmed');
     }
 
-    await this.authService.confirmEmail(payload.id);
-
-    if (redirect) {
-      const jwt = this.authService.generateTokenActive({ id: payload.id });
-
-      const url = new URL(redirect, process.env.FRONTEND_URL);
-      url.searchParams.set('token', jwt);
-
-      return res.redirect(302, url.toString());
-    }
+    await this.authService.confirmEmail(payload.id, token);
 
     return res.send('✅ Email verified successfully');
   }
