@@ -20,7 +20,8 @@ export class AuthService {
     private prisma: PrismaService,
     private emailService: EmailService,
   ) {}
-  async signup(payload: ISignupRequest) {
+
+  async signup(payload: ISignupRequest, origin: string) {
     const hash = await this.encryptPassword(payload.password, 10);
 
     payload.password = hash;
@@ -29,14 +30,17 @@ export class AuthService {
       data: payload,
     });
 
-    await this.sendVerificationEmail(user);
+    await this.sendVerificationEmail(user, origin);
   }
 
   async encryptPassword(plainText, saltRounds) {
     return await bcrypt.hash(plainText, saltRounds);
   }
 
-  async login(LoginDTO: ILoginRequest): Promise<ITokenResponse> {
+  async login(
+    LoginDTO: ILoginRequest,
+    origin: string,
+  ): Promise<ITokenResponse> {
     const user = await this.prisma.user.findFirst({
       where: {
         email: LoginDTO.email,
@@ -57,7 +61,7 @@ export class AuthService {
     }
 
     if (!user.emailVerified) {
-      await this.sendVerificationEmail(user, 'https://www.google.com/');
+      await this.sendVerificationEmail(user, origin);
       throw new UnauthorizedException(
         'Email not verified. Verification link sent.',
       );
@@ -84,7 +88,14 @@ export class AuthService {
   }
 
   generateTokenEmailVerify(payload: object): string {
-    return jwt.sign(payload, jwtConstants.secret, { expiresIn: '10m' });
+    const extendedPayload = {
+      ...payload,
+      type: 'emailVerifyToken',
+    };
+
+    return jwt.sign(extendedPayload, jwtConstants.secret, {
+      expiresIn: '10m',
+    });
   }
 
   verifyTokenActive(token: string): { id: number } {
@@ -95,12 +106,11 @@ export class AuthService {
     }
   }
 
-  private async sendVerificationEmail(user: User, redirectPath?: string) {
+  private async sendVerificationEmail(user: User, origin: string) {
     const tokenEmailVerify = this.generateTokenEmailVerify({ id: user.id });
 
-    const url = new URL('/auth/email/verify', process.env.APP_BASE_URL);
+    const url = new URL('/auth/email/verify', origin);
     url.searchParams.set('token', tokenEmailVerify);
-    if (redirectPath) url.searchParams.set('redirect', redirectPath);
 
     console.log(url.toString());
 
@@ -110,11 +120,17 @@ export class AuthService {
     // );
   }
 
-  async confirmEmail(id: number) {
+  async confirmEmail(id: number, token: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
 
     if (!user) throw new NotFoundException();
     if (user.emailVerified == true) return;
+
+    const decoded = jwt.verify(token, jwtConstants.secret) as jwt.JwtPayload;
+
+    if (decoded.type !== 'emailVerifyToken') {
+      throw new Error('Invalid token type');
+    }
 
     return this.prisma.user.update({
       where: { id },
