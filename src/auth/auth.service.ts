@@ -13,6 +13,7 @@ import { jwtConstants } from './constants';
 import { ITokenResponse } from './interface/token-response.interface.ts';
 import { IUserResponse } from './interface/user-response.interface';
 import { EmailService } from '../email/email.service';
+import { getSignupMode } from '../utils/SignupMode ';
 
 @Injectable()
 export class AuthService {
@@ -21,16 +22,42 @@ export class AuthService {
     private emailService: EmailService,
   ) {}
 
-  async signup(payload: ISignupRequest, origin: string) {
-    const hash = await this.encryptPassword(payload.password, 10);
+  async signup(payload: ISignupRequest, origin: string): Promise<void> {
+    let user;
 
-    payload.password = hash;
+    switch (getSignupMode(payload)) {
+      case 'email': {
+        const { email, name, password } = payload.emailSignup!;
+        const hash = await this.encryptPassword(password, 10);
 
-    const user = await this.prisma.user.create({
-      data: payload,
-    });
+        user = await this.prisma.user.create({
+          data: {
+            name,
+            email,
+            password: hash,
+          },
+        });
 
-    await this.sendVerificationEmail(user, origin);
+        await this.sendVerificationEmail(user, origin);
+        break;
+      }
+
+      case 'phone': {
+        const { phone } = payload.phoneSignup!;
+
+        user = await this.prisma.user.create({
+          data: {
+            phone,
+          },
+        });
+
+        // TODO: отправка OTP
+        break;
+      }
+
+      default:
+        throw new Error('Either emailSignup or phoneSignup must be provided');
+    }
   }
 
   async encryptPassword(plainText, saltRounds) {
