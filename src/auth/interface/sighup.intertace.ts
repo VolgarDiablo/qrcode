@@ -1,6 +1,11 @@
 export interface ISignupRequest {
-  name: string;
-  email: string;
-  phone: string;
-  password: string;
+  mode: 'email' | 'phone';
+  emailSignup?: {
+    name: string;
+    email: string;
+    password: string;
+  };
+  phoneSignup?: {
+    phone: string;
+  };
 }

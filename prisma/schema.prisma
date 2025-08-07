@@ -15,10 +15,10 @@ datasource db {
 
 model User {
   id            Int      @id @default(autoincrement())
-  name          String
-  email         String   @unique
-  phone         String   @unique
-  password      String
+  name          String?
+  email         String?  @unique
+  phone         String?  @unique
+  password      String?
   emailVerified Boolean  @default(false)
   metaData      Json?
   createdAt     DateTime @default(now())

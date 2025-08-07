@@ -1,6 +1,6 @@
 export interface IUserResponse {
   id: number;
-  email: string;
-  name: string;
-  phone: string;
+  email: string | null;
+  name: string | null;
+  phone: string | null;
 }
