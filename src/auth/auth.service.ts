@@ -114,10 +114,10 @@ export class AuthService {
     return jwt.sign(payload, jwtConstants.secret, { expiresIn: '30d' });
   }
 
-  generateTokenEmailVerify(payload: object): string {
+  generateToken(payload: object): string {
     const extendedPayload = {
       ...payload,
-      type: 'emailVerifyToken',
+      type: 'verify',
     };
 
     return jwt.sign(extendedPayload, jwtConstants.secret, {
@@ -125,7 +125,7 @@ export class AuthService {
     });
   }
 
-  verifyTokenActive(token: string): { id: number } {
+  verifyToken(token: string): { id: number } {
     try {
       return jwt.verify(token, jwtConstants.secret) as { id: number };
     } catch (error) {
@@ -134,13 +134,13 @@ export class AuthService {
   }
 
   private async sendVerificationEmail(user: User, origin: string) {
-    const tokenEmailVerify = this.generateTokenEmailVerify({ id: user.id });
+    const tokenEmailVerify = this.generateToken({ id: user.id });
 
-    const url = new URL('/auth/email/verify', origin);
+    const url = new URL('/auth/verify', origin);
+
     url.searchParams.set('token', tokenEmailVerify);
 
     console.log(url.toString());
-
     // await this.emailService.sendTestEmail(
     //   user.email,
     //   `Привет, ${user.name}. Подтверди почту: ${fullUrl}`,
@@ -155,7 +155,7 @@ export class AuthService {
 
     const decoded = jwt.verify(token, jwtConstants.secret) as jwt.JwtPayload;
 
-    if (decoded.type !== 'emailVerifyToken') {
+    if (decoded.type !== 'verify') {
       throw new Error('Invalid token type');
     }
 

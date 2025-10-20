@@ -54,9 +54,9 @@ export class AuthController {
     return new UserResponseDTO(user);
   }
 
-  @Get('email/verify')
+  @Get('verify')
   async verifyEmail(@Res() res: Response, @Query('token') token: string) {
-    const payload = this.authService.verifyTokenActive(token);
+    const payload = this.authService.verifyToken(token);
     if (!payload?.id) throw new BadRequestException('Invalid token');
 
     const user = await this.authService.findByIdRaw(payload.id);
