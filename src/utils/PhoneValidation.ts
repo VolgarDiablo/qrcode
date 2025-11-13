@@ -4,7 +4,7 @@ import { getConfigCountry } from '../config/country.config';
 export function IsPhoneForCurrentCountry(
   validationOptions?: ValidationOptions,
 ) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'IsPhoneForCurrentCountry',
       target: object.constructor,
@@ -12,7 +12,10 @@ export function IsPhoneForCurrentCountry(
       constraints: [],
       options: validationOptions,
       validator: {
-        validate(value: any): boolean {
+        validate(value: string): boolean {
+          if (typeof value !== 'string') {
+            return false;
+          }
           const config = getConfigCountry();
           return config.phoneRegex.test(value);
         },
