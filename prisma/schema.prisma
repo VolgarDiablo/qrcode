@@ -13,6 +13,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//переделать
 model User {
   id            Int      @id @default(autoincrement())
   name          String?
@@ -20,7 +21,243 @@ model User {
   phone         String?  @unique
   password      String?
   emailVerified Boolean  @default(false)
+  codeOTP       String?
   metaData      Json?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  orders        Orders[]
+}
+
+//заведение
+model Place {
+  id            Int      @id @default(autoincrement())
+  placeTablesId Int
+  name          String
+  description   String?
+  address       String?
+  city          String?
+  country       String?
+  latitude      Float
+  longitude     Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  placeTables  PlaceTables   @relation(fields: [placeTablesId], references: [id])
+  promoPLaces  PromoPLaces[]
+  workingTimes WorkingTime[]
+  menus        Menus[]
+  images       Images[]
+  delivery     Delivery[]
+}
+
+//рабочее время заведения
+model WorkingTime {
+  id        Int      @id @default(autoincrement())
+  placeId   Int
+  timeStart DateTime
+  timeEnd   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  place Place @relation(fields: [placeId], references: [id])
+}
+
+//акции заведения
+model PromoPLaces {
+  id        Int      @id @default(autoincrement())
+  placeId   Int
+  timeStart DateTime
+  timeEnd   DateTime
+  isActive  Boolean  @default(false)
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  place           Place           @relation(fields: [placeId], references: [id])
+  promoCategories PromoCategory[]
+}
+
+//общие акции
+model PromoCategory {
+  id              Int      @id @default(autoincrement())
+  promoCategoryId Int
+  name            String
+  description     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  promoPLaces PromoPLaces @relation(fields: [promoCategoryId], references: [id])
+}
+
+//меню заведения
+model Menus {
+  id          Int      @id @default(autoincrement())
+  placeId     Int
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  place          Place          @relation(fields: [placeId], references: [id])
+  menuCategories MenuCategory[]
+  menuItems      MenuItems[]
+}
+
+//категории меню заведения
+model MenuCategory {
+  id          Int      @id @default(autoincrement())
+  menusId     Int
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  menus      Menus        @relation(fields: [menusId], references: [id])
+  categories Categories[]
+}
+
+//общие категории меню
+model Categories {
+  id               Int      @id @default(autoincrement())
+  menuCategoriesId Int
+  name             String
+  description      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  menuCategories MenuCategory @relation(fields: [menuCategoriesId], references: [id])
+}
+
+//
+model MenuItems {
+  id           Int      @id @default(autoincrement())
+  menusId      Int
+  orderItemsId Int
+  name         String
+  description  String?
+  price        Int
+  count        Int
+  isActive     Boolean  @default(true)
+  isDeleted    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  menus      Menus      @relation(fields: [menusId], references: [id])
+  orderItems OrderItems @relation(fields: [orderItemsId], references: [id])
+  products   Products[]
+  images     Images[]
+}
+
+//
+model Products {
+  id          Int      @id @default(autoincrement())
+  menuItemsId Int
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  menuItems MenuItems @relation(fields: [menuItemsId], references: [id])
+  brands    Brands[]
+}
+
+//бренды продуктов
+model Brands {
+  id          Int      @id @default(autoincrement())
+  productsId  Int
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Products @relation(fields: [productsId], references: [id])
+  images   Images[]
+}
+
+model Images {
+  id          Int      @id @default(autoincrement())
+  menuItemsId Int
+  placeId     Int
+  brandsId    Int
+  courierId   Int
+  url         String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  place     Place     @relation(fields: [placeId], references: [id])
+  menuItems MenuItems @relation(fields: [menuItemsId], references: [id])
+  brands    Brands    @relation(fields: [brandsId], references: [id])
+  courier   Courier   @relation(fields: [courierId], references: [id])
+}
+
+model PlaceTables {
+  id          Int      @id @default(autoincrement())
+  placeId     Int
+  ordersId    Int
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  Orders Orders  @relation(fields: [ordersId], references: [id])
+  place  Place[]
+}
+
+model Orders {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User          @relation(fields: [userId], references: [id])
+  placeTables PlaceTables[]
+  orderItems  OrderItems[]
+  delivery    Delivery[]
+}
+
+model OrderItems {
+  id        Int      @id @default(autoincrement())
+  ordersId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders    Orders      @relation(fields: [ordersId], references: [id])
+  menuItems MenuItems[]
+}
+
+model Delivery {
+  id        Int      @id @default(autoincrement())
+  placeId   Int
+  ordersId  Int
+  isActive  Boolean  @default(true)
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  place        Place          @relation(fields: [placeId], references: [id])
+  orders       Orders         @relation(fields: [ordersId], references: [id])
+  courier      Courier[]
+  typeDelivery TypeDelivery[]
+}
+
+model Courier {
+  id         Int      @id @default(autoincrement())
+  deliveryId Int
+  name       String
+  phone      String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id])
+  images   Images[]
+}
+
+model TypeDelivery {
+  id         Int      @id @default(autoincrement())
+  deliveryId Int
+  name       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  delivery Delivery @relation(fields: [deliveryId], references: [id])
 }
