@@ -10,7 +10,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 //переделать
@@ -37,8 +36,8 @@ model Place {
   address       String?
   city          String?
   country       String?
-  latitude      Float
-  longitude     Float
+  // latitude      Float
+  // longitude     Float
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -47,7 +46,7 @@ model Place {
   workingTimes WorkingTime[]
   menus        Menus[]
   images       Images[]
-  delivery     Delivery[]
+  // delivery     Delivery[]
 }
 
 //рабочее время заведения
@@ -69,24 +68,15 @@ model PromoPLaces {
   timeStart DateTime
   timeEnd   DateTime
   isActive  Boolean  @default(false)
-  isDeleted Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  place           Place           @relation(fields: [placeId], references: [id])
-  promoCategories PromoCategory[]
-}
-
-//общие акции
-model PromoCategory {
-  id              Int      @id @default(autoincrement())
-  promoCategoryId Int
-  name            String
-  description     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  promoPLaces PromoPLaces @relation(fields: [promoCategoryId], references: [id])
+  place           Place       @relation(fields: [placeId], references: [id])
+  DISCOUNT        String
+  // mechanick: procent fixed
+  discountPercens Int
+  discountFixed   Int
+  MenuItems       MenuItems[]
 }
 
 //меню заведения
@@ -98,56 +88,40 @@ model Menus {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  place          Place          @relation(fields: [placeId], references: [id])
-  menuCategories MenuCategory[]
-  menuItems      MenuItems[]
+  place     Place       @relation(fields: [placeId], references: [id])
+  menuItems MenuItems[]
 }
 
 //категории меню заведения
-model MenuCategory {
+model MenuItemsCategory {
   id          Int      @id @default(autoincrement())
-  menusId     Int
+  menuItemsId Int
   name        String
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  menus      Menus        @relation(fields: [menusId], references: [id])
-  categories Categories[]
-}
-
-//общие категории меню
-model Categories {
-  id               Int      @id @default(autoincrement())
-  menuCategoriesId Int
-  name             String
-  description      String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  menuCategories MenuCategory @relation(fields: [menuCategoriesId], references: [id])
+  menuItems MenuItems @relation(fields: [menuItemsId], references: [id])
 }
 
 //
 model MenuItems {
-  id           Int      @id @default(autoincrement())
-  menusId      Int
-  orderItemsId Int
-  name         String
-  description  String?
-  price        Int
-  count        Int
-  isActive     Boolean  @default(true)
-  isDeleted    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  menusId   Int
+  promoPlaceId Int
+  productsId Int
+  price     Int
+  count     Int
+  isActive  Boolean  @default(true)
 
-  menus      Menus      @relation(fields: [menusId], references: [id])
-  orderItems OrderItems @relation(fields: [orderItemsId], references: [id])
-  products   Products[]
-  images     Images[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  menus               Menus               @relation(fields: [menusId], references: [id])
+  products            Products            @relation(fields: [productsId], references: [id])
+  promoPlace          PromoPLaces       @relation(fields: [promoPlaceId], references: [id])
+  menuItemsCategories MenuItemsCategory[]
 }
-
 //
 model Products {
   id          Int      @id @default(autoincrement())
@@ -158,6 +132,7 @@ model Products {
   updatedAt   DateTime @updatedAt
 
   menuItems MenuItems @relation(fields: [menuItemsId], references: [id])
+  images    Images[]
   brands    Brands[]
 }
 
@@ -179,7 +154,7 @@ model Images {
   menuItemsId Int
   placeId     Int
   brandsId    Int
-  courierId   Int
+  productsId  Int
   url         String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -187,17 +162,17 @@ model Images {
   place     Place     @relation(fields: [placeId], references: [id])
   menuItems MenuItems @relation(fields: [menuItemsId], references: [id])
   brands    Brands    @relation(fields: [brandsId], references: [id])
-  courier   Courier   @relation(fields: [courierId], references: [id])
+  products  Products  @relation(fields: [productsId], references: [id])
 }
 
 model PlaceTables {
-  id          Int      @id @default(autoincrement())
-  placeId     Int
-  ordersId    Int
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  placeId   Int
+  ordersId  Int
+  // name        String
+  // description String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   Orders Orders  @relation(fields: [ordersId], references: [id])
   place  Place[]
@@ -211,53 +186,42 @@ model Orders {
 
   user        User          @relation(fields: [userId], references: [id])
   placeTables PlaceTables[]
-  orderItems  OrderItems[]
-  delivery    Delivery[]
+  // delivery    Delivery[]
 }
 
-model OrderItems {
-  id        Int      @id @default(autoincrement())
-  ordersId  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// model Delivery {
+//   id        Int      @id @default(autoincrement())
+//   placeId   Int
+//   ordersId  Int
+//   isActive  Boolean  @default(true)
+//   isDeleted Boolean  @default(false)
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
 
-  orders    Orders      @relation(fields: [ordersId], references: [id])
-  menuItems MenuItems[]
-}
+//   place        Place          @relation(fields: [placeId], references: [id])
+//   orders       Orders         @relation(fields: [ordersId], references: [id])
+//   courier      Courier[]
+//   typeDelivery TypeDelivery[]
+// }
 
-model Delivery {
-  id        Int      @id @default(autoincrement())
-  placeId   Int
-  ordersId  Int
-  isActive  Boolean  @default(true)
-  isDeleted Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+// model Courier {
+//   id         Int      @id @default(autoincrement())
+//   deliveryId Int
+//   name       String
+//   phone      String
+//   createdAt  DateTime @default(now())
+//   updatedAt  DateTime @updatedAt
 
-  place        Place          @relation(fields: [placeId], references: [id])
-  orders       Orders         @relation(fields: [ordersId], references: [id])
-  courier      Courier[]
-  typeDelivery TypeDelivery[]
-}
+//   delivery Delivery @relation(fields: [deliveryId], references: [id])
+//   images   Images[]
+// }
 
-model Courier {
-  id         Int      @id @default(autoincrement())
-  deliveryId Int
-  name       String
-  phone      String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+// model TypeDelivery {
+//   id         Int      @id @default(autoincrement())
+//   deliveryId Int
+//   name       String
+//   createdAt  DateTime @default(now())
+//   updatedAt  DateTime @updatedAt
 
-  delivery Delivery @relation(fields: [deliveryId], references: [id])
-  images   Images[]
-}
-
-model TypeDelivery {
-  id         Int      @id @default(autoincrement())
-  deliveryId Int
-  name       String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  delivery Delivery @relation(fields: [deliveryId], references: [id])
-}
+//   delivery Delivery @relation(fields: [deliveryId], references: [id])
+// }
